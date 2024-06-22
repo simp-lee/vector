@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"math"
 	"sort"
-	"strconv"
 	"sync"
 )
 
@@ -143,7 +142,7 @@ func getTopNSimilarEmbeddings(queryEmbedding []float64, embeddings [][]float64, 
 			// The dot product is the cosine similarity for normalized vectors.
 			score, err := dotProduct(normalizedQueryEmbedding, embedding)
 			if err != nil {
-				slog.Warn("Warning: error calculating dot product for embedding" + strconv.Itoa(i) + ", error:" + err.Error())
+				slog.Warn("error calculating dot product for embedding", "index", i, "error", err)
 				return
 			}
 

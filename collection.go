@@ -282,18 +282,18 @@ func (c *Collection) GetTopNSimilarDocuments(query string, topN int) ([]Result, 
 			defer wg.Done()
 			docID, segmentIndex, err := parseIDAndSegmentIndex(sim.ID)
 			if err != nil {
-				slog.Warn("Warning: Failed to parse ID" + sim.ID + ", error:" + err.Error())
+				slog.Warn("failed to parse ID", "ID", sim.ID, "error", err)
 				return // Skip invalid IDs.
 			}
 
 			doc, ok := c.documents[docID]
 			if !ok {
-				slog.Warn("Warning: Document" + docID + "not found in collection")
+				slog.Warn("document not found in collection", "docID", docID)
 				return // Skip documents that are not found in the collection.
 			}
 
 			if segmentIndex < 0 || segmentIndex >= len(doc.Segments) {
-				slog.Warn("Warning: Segment index" + strconv.Itoa(segmentIndex) + "out of bounds for document" + docID)
+				slog.Warn("segment index out of bounds for document", "segmentIndex", segmentIndex, "docID", docID)
 				return // Skip segments that are out of bounds.
 			}
 
@@ -337,7 +337,7 @@ func (c *Collection) GetTopNSimilarDocumentsForQueries(queries []string, topN in
 			results, queryErr := c.GetTopNSimilarDocuments(query, topN)
 			if queryErr != nil {
 				mu.Lock()
-				slog.Warn("failed to get top N similar documents", slog.String("query", query), slog.Any("error", queryErr))
+				slog.Warn("failed to get top N similar documents", "query", query, "error", queryErr)
 				errNum++
 				mu.Unlock()
 				return
