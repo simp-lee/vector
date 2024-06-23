@@ -78,7 +78,7 @@ func createTestData() []Result {
 // MockFormatter is a mock implementation of the Formatter interface for testing.
 type MockFormatter struct{}
 
-func (mf MockFormatter) Format(docID string, metadata map[string]interface{}, content string) string {
+func (mf *MockFormatter) Format(docID string, metadata map[string]interface{}, content string) string {
 	keys := sortMetadataKeys(metadata)
 
 	var metadataStr string
@@ -91,7 +91,7 @@ func (mf MockFormatter) Format(docID string, metadata map[string]interface{}, co
 // HTMLFormatter formats the document in HTML.
 type HTMLFormatter struct{}
 
-func (hf HTMLFormatter) Format(docID string, metadata map[string]interface{}, content string) string {
+func (hf *HTMLFormatter) Format(docID string, metadata map[string]interface{}, content string) string {
 	keys := sortMetadataKeys(metadata)
 
 	var metadataStr string
@@ -104,7 +104,7 @@ func (hf HTMLFormatter) Format(docID string, metadata map[string]interface{}, co
 // JSONFormatter formats the document in JSON.
 type JSONFormatter struct{}
 
-func (jf JSONFormatter) Format(docID string, metadata map[string]interface{}, content string) string {
+func (jf *JSONFormatter) Format(docID string, metadata map[string]interface{}, content string) string {
 	// Define a struct to ensure the order of fields in JSON
 	type JSONDocument struct {
 		DocID    string                 `json:"docID"`
