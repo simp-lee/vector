@@ -30,13 +30,8 @@ type Formatter interface {
 // AggregateResults aggregates the results of multiple queries into a single result set
 // using the given formatter interface to format the results.
 func AggregateResults(results []Result, formatter Formatter) string {
-	// Sort the results by similarity score in descending order.
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Similarity > results[j].Similarity
-	})
-
-	// Maps docID to accumulated content.
-	docContentMap := make(map[string]string)
+	// Maps docID to a list of segments in their original order.
+	docSegmentsMap := make(map[string][]*Segment)
 	// Maps docID to metadata.
 	docMetadataMap := make(map[string]map[string]interface{})
 	// Maps docID to the highest similarity score.
@@ -45,16 +40,14 @@ func AggregateResults(results []Result, formatter Formatter) string {
 	// Accumulate content and metadata.
 	for _, result := range results {
 		docID := result.Document.ID
-		content, exists := docContentMap[docID]
-
-		if !exists {
+		if _, exists := docSegmentsMap[docID]; !exists {
 			// This is the first time we encounter this document
 			docMetadataMap[docID] = result.Document.Metadata
-			docContentMap[docID] = result.Segment.Text
+			docSegmentsMap[docID] = result.Document.Segments
 			docSimilarityMap[docID] = result.Similarity
-		} else {
-			// Append the current segment's text to the existing content
-			docContentMap[docID] = content + "\n" + result.Segment.Text
+		} else if result.Similarity > docSimilarityMap[docID] {
+			// Update the highest similarity score for the document.
+			docSimilarityMap[docID] = result.Similarity
 		}
 	}
 
@@ -71,7 +64,23 @@ func AggregateResults(results []Result, formatter Formatter) string {
 	var resultBuilder strings.Builder
 	for _, docID := range docIDs {
 		metadata := docMetadataMap[docID]
-		formattedContent := formatter.Format(docID, metadata, docContentMap[docID])
+		var contentBuilder strings.Builder
+		for i, segment := range docSegmentsMap[docID] {
+			for _, result := range results {
+				// Find the segment that corresponds to the result.
+				if result.Document.ID == docID && result.Segment == segment {
+					if i > 0 {
+						// Add a separator between segments.
+						contentBuilder.WriteString("\n")
+					}
+					contentBuilder.WriteString(segment.Text)
+					break
+				}
+			}
+		}
+
+		// Format the document using the formatter.
+		formattedContent := formatter.Format(docID, metadata, contentBuilder.String())
 		resultBuilder.WriteString(formattedContent)
 	}
 

@@ -25,31 +25,50 @@ func createTestData() []Result {
 		Metadata: map[string]interface{}{
 			"author": "Alice",
 			"date":   "2023-04-01",
+			"title":  "Hello World Title",
 		},
 		Segments: []*Segment{
-			{Text: "Hello", Embedding: []float64{0.1, 0.2}},
-			{Text: "World", Embedding: []float64{0.3, 0.4}},
+			{Text: "Hello1", Embedding: []float64{0.1, 0.2}},
+			{Text: "Not Wanted", Embedding: []float64{0.32, 0.42}},
+			{Text: "World2", Embedding: []float64{0.3, 0.4}},
 		},
-		Content: "Hello World",
+		Content: "Hello1 World2",
 	}
 
 	doc2 := &Document{
 		ID: "doc2",
 		Metadata: map[string]interface{}{
 			"author": "Bob",
+			"title":  "Foo Bar Baz Title",
 			"date":   "2023-04-02",
 		},
 		Segments: []*Segment{
-			{Text: "Foo", Embedding: []float64{0.5, 0.6}},
-			{Text: "Bar", Embedding: []float64{0.7, 0.8}},
+			{Text: "Foo1", Embedding: []float64{0.5, 0.6}},
+			{Text: "Bar2", Embedding: []float64{0.7, 0.8}},
+			{Text: "Baz3", Embedding: []float64{0.91, 0.12}},
 		},
-		Content: "Foo Bar",
+		Content: "Foo1 Bar2 Baz3",
+	}
+
+	doc3 := &Document{
+		ID: "doc3",
+		Metadata: map[string]interface{}{
+			"title":  "doc3 segment title",
+			"author": "Charlie",
+			"date":   "2023-04-03",
+		},
+		Segments: []*Segment{
+			{Text: "doc3 segment", Embedding: []float64{0.9, 0.10}},
+		},
+		Content: "doc3 segment",
 	}
 
 	results := []Result{
-		{Document: doc1, Segment: doc1.Segments[0], Similarity: 0.7},
-		{Document: doc1, Segment: doc1.Segments[1], Similarity: 0.9},
+		{Document: doc2, Segment: doc2.Segments[2], Similarity: 0.92},
+		{Document: doc1, Segment: doc1.Segments[2], Similarity: 0.9},
 		{Document: doc2, Segment: doc2.Segments[0], Similarity: 0.8},
+		{Document: doc3, Segment: doc3.Segments[0], Similarity: 0.73},
+		{Document: doc1, Segment: doc1.Segments[0], Similarity: 0.7},
 		{Document: doc2, Segment: doc2.Segments[1], Similarity: 0.6},
 	}
 
@@ -110,13 +129,13 @@ func TestAggregateResultsWithMockFormatter(t *testing.T) {
 	results := createTestData()
 
 	// Create a mock formatter.
-	formatter := MockFormatter{}
+	formatter := &MockFormatter{}
 
 	// Aggregate the results.
 	aggregated := AggregateResults(results, formatter)
 
 	// Expected output.
-	expected := "doc1|author:Alice date:2023-04-01|World\nHellodoc2|author:Bob date:2023-04-02|Foo\nBar"
+	expected := "doc2|author:Bob date:2023-04-02 title:Foo Bar Baz Title|Foo1\nBar2\nBaz3doc1|author:Alice date:2023-04-01 title:Hello World Title|Hello1\nWorld2doc3|author:Charlie date:2023-04-03 title:doc3 segment title|doc3 segment"
 
 	// Check if the aggregated result matches the expected output.
 	if aggregated != expected {
@@ -128,14 +147,15 @@ func TestAggregateResultsWithHTMLFormatter(t *testing.T) {
 	results := createTestData()
 
 	// Create an HTML formatter.
-	formatter := HTMLFormatter{}
+	formatter := &HTMLFormatter{}
 
 	// Aggregate the results.
 	aggregated := AggregateResults(results, formatter)
 
 	// Expected output.
-	expected := "<div id='doc1'><div>author: Alice</div><div>date: 2023-04-01</div><div>World\nHello</div></div>" +
-		"<div id='doc2'><div>author: Bob</div><div>date: 2023-04-02</div><div>Foo\nBar</div></div>"
+	expected := "<div id='doc2'><div>author: Bob</div><div>date: 2023-04-02</div><div>title: Foo Bar Baz Title</div><div>Foo1\nBar2\nBaz3</div></div>" +
+		"<div id='doc1'><div>author: Alice</div><div>date: 2023-04-01</div><div>title: Hello World Title</div><div>Hello1\nWorld2</div></div>" +
+		"<div id='doc3'><div>author: Charlie</div><div>date: 2023-04-03</div><div>title: doc3 segment title</div><div>doc3 segment</div></div>"
 
 	// Check if the aggregated result matches the expected output.
 	if aggregated != expected {
@@ -147,13 +167,13 @@ func TestAggregateResultsWithJSONFormatter(t *testing.T) {
 	results := createTestData()
 
 	// Create a JSON formatter.
-	formatter := JSONFormatter{}
+	formatter := &JSONFormatter{}
 
 	// Aggregate the results.
 	aggregated := AggregateResults(results, formatter)
 
 	// Expected output.
-	expected := `{"docID":"doc1","metadata":{"author":"Alice","date":"2023-04-01"},"content":"World\nHello"}{"docID":"doc2","metadata":{"author":"Bob","date":"2023-04-02"},"content":"Foo\nBar"}`
+	expected := `{"docID":"doc2","metadata":{"author":"Bob","date":"2023-04-02","title":"Foo Bar Baz Title"},"content":"Foo1\nBar2\nBaz3"}{"docID":"doc1","metadata":{"author":"Alice","date":"2023-04-01","title":"Hello World Title"},"content":"Hello1\nWorld2"}{"docID":"doc3","metadata":{"author":"Charlie","date":"2023-04-03","title":"doc3 segment title"},"content":"doc3 segment"}`
 
 	// Check if the aggregated result matches the expected output.
 	if aggregated != expected {
